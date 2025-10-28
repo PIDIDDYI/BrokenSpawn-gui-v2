@@ -1,0 +1,386 @@
+local Player = game:GetService("Players").LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local SoundService = game:GetService("SoundService")
+
+local MainGui = Instance.new("ScreenGui")
+MainGui.Name = "BrokenSpawnV2"
+MainGui.Parent = PlayerGui
+MainGui.ResetOnSpawn = false
+
+local SpawnIcon = Instance.new("ImageButton")
+SpawnIcon.Name = "SpawnIcon"
+SpawnIcon.Size = UDim2.new(0, 60, 0, 60)
+SpawnIcon.Position = UDim2.new(0, 30, 0.5, -30)
+SpawnIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+SpawnIcon.Image = "rbxassetid://100295607733330" -- PUT YOUR IMAGE ID
+SpawnIcon.ScaleType = Enum.ScaleType.Crop
+SpawnIcon.Parent = MainGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(1, 0)
+UICorner.Parent = SpawnIcon
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(200, 200, 200)
+UIStroke.Thickness = 2
+UIStroke.Parent = SpawnIcon
+
+local MenuFrame = Instance.new("Frame")
+MenuFrame.Name = "MenuFrame"
+MenuFrame.Size = UDim2.new(0, 300, 0, 100) -- Wide and short for horizontal
+MenuFrame.Position = UDim2.new(0, 100, 0.5, -60)
+MenuFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+MenuFrame.BorderSizePixel = 0
+MenuFrame.Visible = false
+MenuFrame.Parent = MainGui
+
+
+local MenuCorner = Instance.new("UICorner")
+MenuCorner.CornerRadius = UDim.new(0, 15)
+MenuCorner.Parent = MenuFrame
+
+local MenuStroke = Instance.new("UIStroke")
+MenuStroke.Color = Color3.fromRGB(230, 230, 230)
+MenuStroke.Thickness = 2
+MenuStroke.Parent = MenuFrame
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(0.98, 0, 0, 30)
+TitleBar.Position = UDim2.new(0, 4.5, 0, 5)
+TitleBar.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MenuFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "Title"
+TitleLabel.Size = UDim2.new(1, -20, 1, 0)
+TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
+TitleLabel.Text = "BROKEN SPAWN GUI V2"
+TitleLabel.Font = Enum.Font.Gotham
+TitleLabel.TextSize = 12
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.TextTransparency = 0.3
+TitleLabel.Parent = TitleBar
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 25, 0, 25)
+CloseButton.Position = UDim2.new(1, -30, 0, 2)
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+CloseButton.Text = ""
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 16
+CloseButton.TextTransparency = 0.5
+CloseButton.Parent = TitleBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(1, 0)
+CloseCorner.Parent = CloseButton
+
+local ContentFrame = Instance.new("ScrollingFrame")
+ContentFrame.Name = "Content"
+ContentFrame.Size = UDim2.new(1, -20, 1, -40)
+ContentFrame.Position = UDim2.new(0, 10, 0, 35)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.BorderSizePixel = 0
+ContentFrame.ScrollBarThickness = 3
+ContentFrame.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
+ContentFrame.Parent = MenuFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.FillDirection = Enum.FillDirection.Horizontal
+UIListLayout.Padding = UDim.new(0, 10)
+UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Parent = ContentFrame
+
+local menuVisible = false
+local dragging = false
+local dragInput, dragStart, startPos
+
+local currentMusic = nil
+local discoEffect = nil
+local particleEffects = {}
+
+local function toggleMenu()
+    menuVisible = not menuVisible
+    
+    if menuVisible then
+        MenuFrame.Visible = true
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = TweenService:Create(MenuFrame, tweenInfo, {Position = UDim2.new(0, 100, 0.5, -60)})
+        tween:Play()
+    else
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = TweenService:Create(MenuFrame, tweenInfo, {Position = UDim2.new(-1, 100, 0.5, -60)})
+        tween:Play()
+        wait(0.3)
+        MenuFrame.Visible = false
+    end
+end
+
+local function update(input)
+    local delta = input.Position - dragStart
+    MenuFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MenuFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+TitleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+local function ChangeSkybox(skyboxId)
+    skyboxId = skyboxId or "rbxassetid://86595728864013" -- Default skybox ID
+    
+    for _, obj in pairs(Lighting:GetChildren()) do
+        if string.find(obj.ClassName, "Sky") then
+            obj:Destroy()
+        end
+    end
+    
+    local skybox = Instance.new("Sky")
+    skybox.SkyboxBk = skyboxId
+    skybox.SkyboxDn = skyboxId
+    skybox.SkyboxFt = skyboxId
+    skybox.SkyboxLf = skyboxId
+    skybox.SkyboxRt = skyboxId
+    skybox.SkyboxUp = skyboxId
+    skybox.Parent = Lighting
+    
+    print(" Skybox changed to: " .. skyboxId)
+end
+
+local function ApplyDecals(decalId)
+    decalId = decalId or "rbxassetid://86595728864013" -- Default decal ID
+    
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("Part") then
+            -- Remove existing decals
+            for _, child in pairs(obj:GetChildren()) do
+                if child:IsA("Decal") then
+                    child:Destroy()
+                end
+            end
+            
+            -- Add decals to all faces
+            for _, face in pairs(Enum.NormalId:GetEnumItems()) do
+                local decal = Instance.new("Decal")
+                decal.Texture = decalId
+                decal.Face = face
+                decal.Parent = obj
+            end
+        elseif obj:IsA("Model") then
+            -- Apply to character parts (head, torso, limbs)
+            for _, part in pairs(obj:GetDescendants()) do
+                if part:IsA("Part") or part:IsA("MeshPart") then
+                    for _, face in pairs(Enum.NormalId:GetEnumItems()) do
+                        local decal = Instance.new("Decal")
+                        decal.Texture = decalId
+                        decal.Face = face
+                        decal.Parent = part
+                    end
+                end
+            end
+        end
+    end
+    
+    print(" Decals applied to everything: " .. decalId)
+end
+
+local function ToggleDisco()
+    if discoEffect then
+        discoEffect = false
+        Lighting.Ambient = Color3.new(0, 0, 0)
+        print(" Disco effect disabled")
+    else
+        discoEffect = true
+        spawn(function()
+            local colors = {
+                Color3.new(1, 0, 0),    -- Red
+                Color3.new(0, 1, 0),    -- Green
+                Color3.new(0, 0, 1),    -- Blue
+                Color3.new(1, 1, 0),    -- Yellow
+                Color3.new(1, 0, 1),    -- Magenta
+                Color3.new(0, 1, 1)     -- Cyan
+            }
+            
+            while discoEffect do
+                for _, color in pairs(colors) do
+                    if not discoEffect then break end
+                    Lighting.Ambient = color
+                    wait(0.5)
+                end
+            end
+        end)
+        print(" Disco effect enabled")
+    end
+end
+
+local function PlayMusic(musicId)
+    musicId = musicId or "rbxassetid://98530874277741" -- Default music ID
+    
+    if currentMusic then
+        currentMusic:Stop()
+        currentMusic:Destroy()
+        currentMusic = nil
+    end
+    
+    currentMusic = Instance.new("Sound")
+    currentMusic.SoundId = musicId
+    currentMusic.Volume = 0.5
+    currentMusic.Looped = true
+    currentMusic.Parent = SoundService
+    currentMusic:Play()
+    
+    print("Music: " .. musicId)
+end
+
+local function StopMusic()
+    if currentMusic then
+        currentMusic:Stop()
+        currentMusic:Destroy()
+        currentMusic = nil
+        print("Music stop")
+    end
+end
+
+local function ToggleParticles(particleId)
+    particleId = particleId or "rbxassetid://86595728864013" -- Default particle texture
+    
+    if next(particleEffects) then
+        -- Remove all particles
+        for _, effect in pairs(particleEffects) do
+            effect:Destroy()
+        end
+        particleEffects = {}
+        print("Particles removed")
+    else
+        -- Add particles to all players
+        for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+            if player.Character then
+                local humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
+                if humanoidRootPart then
+                    local particleEmitter = Instance.new("ParticleEmitter")
+                    particleEmitter.Texture = particleId
+                    particleEmitter.Lifetime = NumberRange.new(1, 3)
+                    particleEmitter.Rate = 50
+                    particleEmitter.SpreadAngle = Vector2.new(45, 45)
+                    particleEmitter.Speed = NumberRange.new(5, 10)
+                    particleEmitter.Parent = humanoidRootPart
+                    
+                    table.insert(particleEffects, particleEmitter)
+                end
+            end
+        end
+        print("Particles added to all players: " .. particleId)
+    end
+end
+
+local functionButtons = {
+    {
+        Name = "Skybox",
+        Function = function()
+            ChangeSkybox("rbxassetid://86595728864013") -- Change this ID
+        end,
+        Color = Color3.fromRGB(255, 255, 255)
+    },
+    {
+        Name = "Decals", 
+        Function = function()
+            ApplyDecals("rbxassetid://86595728864013") -- Change this ID
+        end,
+        Color = Color3.fromRGB(255, 255, 255)
+    },
+    {
+        Name = "Disco",
+        Function = ToggleDisco,
+        Color = Color3.fromRGB(255, 255, 255)
+    },
+    {
+        Name = "Music",
+        Function = function()
+            PlayMusic("rbxassetid://98530874277741") -- Change this ID
+        end,
+        Color = Color3.fromRGB(255, 255, 255)
+    },
+    {
+        Name = "Stop Music",
+        Function = StopMusic,
+        Color = Color3.fromRGB(255, 255, 255)
+    },
+    {
+        Name = "Particles",
+        Function = function()
+            ToggleParticles("rbxassetid://86595728864013") -- Change this ID
+        end,
+        Color = Color3.fromRGB(255, 255, 255)
+    }
+}
+
+for i, buttonData in pairs(functionButtons) do
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 80, 0, 60)
+    button.BackgroundColor3 = buttonData.Color
+    button.TextColor3 = Color3.fromRGB(0, 0, 0)
+    button.Text = buttonData.Name
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 10
+    button.TextWrapped = true
+    button.LayoutOrder = i
+    button.Parent = ContentFrame
+    
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 8)
+    buttonCorner.Parent = button
+    
+    local buttonStroke = Instance.new("UIStroke")
+    buttonStroke.Color = Color3.fromRGB(230, 230, 230)
+    buttonStroke.Thickness = 1
+    buttonStroke.Parent = button
+    
+    button.MouseButton1Click:Connect(buttonData.Function)
+end
+
+SpawnIcon.MouseButton1Click:Connect(toggleMenu)
+CloseButton.MouseButton1Click:Connect(function()
+    menuVisible = true
+    toggleMenu()
+end)
+
+-- Auto-resize horizontal content
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ContentFrame.CanvasSize = UDim2.new(0, UIListLayout.AbsoluteContentSize.X, 0, 0)
+end)
+
+print(" BROKEN SPAWN GUI V2 loaded!")
+print(" Funcs: Skybox, Decals, Disco, Music, Particles")
