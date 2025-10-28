@@ -192,7 +192,6 @@ local function ApplyDecals(decalId)
                 end
             end
             
-            -- Add decals to all faces
             for _, face in pairs(Enum.NormalId:GetEnumItems()) do
                 local decal = Instance.new("Decal")
                 decal.Texture = decalId
