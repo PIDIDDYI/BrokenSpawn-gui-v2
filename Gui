@@ -246,7 +246,7 @@ local function ToggleDisco()
 end
 
 local function PlayMusic(musicId)
-    musicId = musicId or "rbxassetid://98530874277741" -- Default music ID
+    musicId = musicId or "rbxassetid://72387397195218" -- Default music ID
     
     if currentMusic then
         currentMusic:Stop()
@@ -328,7 +328,7 @@ local functionButtons = {
     {
         Name = "Music",
         Function = function()
-            PlayMusic("rbxassetid://98530874277741") -- Change this ID
+            PlayMusic("rbxassetid://72387397195218") -- Change this ID
         end,
         Color = Color3.fromRGB(255, 255, 255)
     },
